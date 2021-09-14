@@ -3,6 +3,7 @@ package ru.kpfu.itis.amirhan;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Http implements HttpClient {
@@ -12,17 +13,17 @@ public class Http implements HttpClient {
             StringBuilder stringBuilder = new StringBuilder();
             try {
                   URL getUrl = new URL(url);
-                  HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
-                  connection.setRequestProperty("Content-Type", "application/json");
-                  connection.setRequestMethod("GET");
+                  HttpURLConnection getConnection = (HttpURLConnection) getUrl.openConnection();
+                  getConnection.setRequestMethod("GET");
+                  getConnection.setConnectTimeout(15000);
+                  getConnection.setReadTimeout(5000);
 
-                  for (int i = 0; i < headers.size(); i++) {
-                        String header =
-                        connection.setRequestProperty(headers, headers.get(header));
+                  for (String header : headers.keySet()) {
+                        getConnection.setRequestProperty(header, headers.get(header));
                   }
 
                   try (BufferedReader reader = new BufferedReader(
-                          new InputStreamReader(connection.getInputStream())
+                          new InputStreamReader(getConnection.getInputStream())
                   )) {
                         String input;
                         while ((input = reader.readLine()) != null) {
@@ -30,7 +31,7 @@ public class Http implements HttpClient {
                         }
                   }
 
-                  connection.disconnect();
+                  getConnection.disconnect();
 
             } catch (IOException e) {
                   e.printStackTrace();
@@ -46,11 +47,13 @@ public class Http implements HttpClient {
                   HttpURLConnection postConnection = (HttpURLConnection) postUrl.openConnection();
 
                   postConnection.setRequestMethod("POST");
-                  postConnection.setRequestProperty("Content-Type", "application/json");
-                  postConnection.setRequestProperty("Accept", "application/json");
                   postConnection.setDoOutput(true);
 
                   String jsonInputString = "{\"name\":\"Tenali Ramakrishna\", \"gender\":\"male\", \"email\":\"tenali.ramakrishna1@gmail.com\", \"status\":\"active\"}";
+
+                  for (String header : headers.keySet()) {
+                        postConnection.setRequestProperty(header, headers.get(header));
+                  }
 
                   try (OutputStream outputStream = postConnection.getOutputStream()) {
                         byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
@@ -78,7 +81,16 @@ public class Http implements HttpClient {
       public static void main(String[] args) {
             Http httpClient = new Http();
 
-            System.out.println(httpClient.get("https://postman-echo.com/get", null, null));
-            System.out.println(httpClient.post("https://postman-echo.com/post", null, null));
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/json");
+            headers.put("Accept", "application/json");
+
+            Map<String, String> params = new HashMap<>();
+            params.put("Name", "LLrk");
+            params.put("Version","5.0");
+            params.put("Who","You");
+
+            System.out.println(httpClient.get("https://postman-echo.com/get", headers, null));
+            System.out.println(httpClient.get("https://postman-echo.com/post", null, params));
       }
 }
